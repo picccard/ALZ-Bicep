@@ -1,0 +1,106 @@
+
+name: ALZ-Bicep-3 Workflow
+
+on:
+  push:
+    branches: [ "main" ]
+    paths: [ "config/custom-parameters/subPlacementAll.parameters.all.json" ]
+  pull_request:
+    branches: [ "main" ]
+    paths: [ "config/custom-parameters/subPlacementAll.parameters.all.json" ]
+  workflow_dispatch: {}
+  
+permissions:
+    id-token: write
+    contents: read
+    pull-requests: write
+
+env:
+  ENV_FILE: ".env"
+  WHATIF_TO_PR: true
+
+jobs:
+  whatif:
+    name: "Bicep Deployment"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Remove Quotation Marks from Environment File
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Write-Host $ENV_FILE
+            (Get-Content -Path $env:ENV_FILE -Encoding UTF8) | ForEach-Object {$_ -replace '"',''} | Out-File -FilePath $env:ENV_FILE -Encoding UTF8
+          azPSVersion: "latest"
+
+      - name: Import Environment Variables from File
+        run: cat ${{ env.ENV_FILE }} >> $GITHUB_ENV
+
+      - name: OIDC Login to Tenant
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.MANAGEMENT_SUBSCRIPTION_ID }}
+          enable-AzPSSession: true
+
+      - name: Validate
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1 -ValidateOnly $true
+          azPSVersion: "latest"
+
+      - name: What-If
+        id: whatif
+        if: github.event_name == 'pull_request'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            $whatif = .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1 -WhatIfOnly $true
+            $whatif
+            $EOF = '' -join (1..15 | ForEach {[char]((48..57)+(65..90)+(97..122) | Get-Random)}) # github action task-output cant handle linebreaks/multilines, this is a workaround
+            "WHATIF<<$EOF" >> $env:GITHUB_OUTPUT
+            $whatif >> $env:GITHUB_OUTPUT
+            "$EOF" >> $env:GITHUB_OUTPUT
+          azPSVersion: "latest"
+
+      - name: Push Whatif Output to PR
+        if: github.event_name == 'pull_request' && env.WHATIF_TO_PR == true
+        uses: actions/github-script@v6
+        env:
+          WHATIF: "${{ steps.whatif.outputs.WHATIF }}"
+        with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+            script: |
+              const output = `#### Deployment WhatIf 📖\`${{ steps.whatif.outcome }}\`
+
+              <details><summary>Show WhatIf</summary>
+
+              \`\`\`text\n
+              ${process.env.WHATIF}
+              \`\`\`
+
+              </details>
+
+              *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: output
+              })
+
+      - name: Deployment
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1
+          azPSVersion: "latest"
