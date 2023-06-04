@@ -31,6 +31,7 @@ $inputObject = @{
 if ($ValidateOnly) {
   $validateErrors = Test-AzManagementGroupDeployment @inputObject
   if ($validateErrors.Count -gt 0) { throw ($validateErrors | Out-String).Trim() }
+  return
 }
 
 if ($WhatIfOnly) {
