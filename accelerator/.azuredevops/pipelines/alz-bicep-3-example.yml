@@ -1,0 +1,110 @@
+name: ALZ-Bicep-3 Workflow
+
+trigger:
+  branches:
+    include:
+      - "main"
+  paths:
+    include:
+      - "config/custom-parameters/subPlacementAll.parameters.all.json"
+
+pr:
+  branches:
+    include:
+      - "main"
+  paths:
+    include:
+      - "config/custom-parameters/subPlacementAll.parameters.all.json"
+
+variables:
+  ENV_FILE: ".env"
+  SERVICE_CONNECTION_NAME: "[your service connection name here]"
+  WHATIF_TO_PR: true
+
+jobs:
+  - job: ALZ_Bicep_3_Workflow_Job
+    pool:
+      vmImage: ubuntu-latest
+    steps:
+      - checkout: self
+        displayName: Checkout Repo
+
+      - pwsh: |
+          (Get-Content -Path $env:ENV_FILE -Encoding UTF8) | ForEach-Object {$_ -replace '"',''} | Out-File -FilePath $env:ENV_FILE -Encoding UTF8
+        displayName: Remove Quotation Marks from Environment File
+
+      - pwsh: |
+          Write-Host $env:ENV_FILE
+          Get-Content -Path $env:ENV_FILE -Encoding UTF8 | ForEach-Object {
+            $envVarName, $envVarValue = ($_ -replace '"','').split('=')
+            echo "##vso[task.setvariable variable=$envVarName;]$envVarValue"
+            echo "Set $envVarName to $envVarValue]"
+          }
+        displayName: Import Environment Variables from File
+
+      - task: AzurePowerShell@5
+        displayName: "Validate Deploy Subscription Placement"
+        inputs:
+          azureSubscription: ${{ variables.SERVICE_CONNECTION_NAME }}
+          azurePowerShellVersion: "LatestVersion"
+          pwsh: true
+          ScriptType: "InlineScript"
+          Inline: |
+            .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1 -ValidateOnly $true
+            
+      - task: AzurePowerShell@5
+        displayName: "WhatIf Deploy Subscription Placement"
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+        inputs:
+          azureSubscription: ${{ variables.SERVICE_CONNECTION_NAME }}
+          azurePowerShellVersion: "LatestVersion"
+          pwsh: true
+          ScriptType: "InlineScript"
+          Inline: |
+            $whatif = .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1 -WhatIfOnly $true
+            $whatif = $whatif.split("`n") -join "%0D%0A" # azdo variables cant handle linebreaks/multilines, this is a workaround
+            $whatif
+            echo "##vso[task.setvariable variable=whatif;]$whatif"
+
+      - task: PowerShell@2
+        displayName: "Post comment on PR"
+        condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'), eq(variables['WHATIF_TO_PR'], true))
+        inputs:
+          targetType: 'inline'
+          pwsh: true
+          script: |
+            $buildUrl = "{0}{1}/_build/results?buildId={2}&view=logs" -f $env:SYSTEM_COLLECTIONURI, $env:SYSTEM_TEAMPROJECTID, $env:BUILD_BUILDID
+            $content = @"
+            # CHECK BEFORE MERGE
+            This comment was added automatically by build validation pipeline to help DevOps team predict **what will change** after completing this PR.`n
+            Empty output below means there are no changes to apply.`n
+            [Click to navigate to detailed log]({0})`n
+            ``````text
+            {1}
+            ``````
+            "@ -f $buildUrl, '$(whatif)'
+            $body = @{
+              comments = @(
+                @{
+                  parentCommentId = 0
+                  content = $content
+                  commentType = "text"
+                }
+              )
+              status = "active"
+            } | ConvertTo-Json -Depth 10
+            $body
+            $apiUrl = "{0}{1}/_apis/git/repositories/{2}/pullRequests/{3}/threads?api-version=7.0" -f $env:SYSTEM_COLLECTIONURI, $env:SYSTEM_TEAMPROJECTID, $env:BUILD_REPOSITORY_ID, $env:SYSTEM_PULLREQUEST_PULLREQUESTID
+            $result = Invoke-RestMethod -Uri $apiUrl -Method POST -Headers @{Authorization = "Bearer $(System.AccessToken)"} -Body $Body -ContentType application/json
+            $result
+
+      - task: AzurePowerShell@5
+        displayName: "Deploy Subscription Placement"
+        condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'), in(variables['Build.Reason'], 'IndividualCI', 'BatchedCI'))
+        inputs:
+          azureSubscription: ${{ variables.SERVICE_CONNECTION_NAME }}
+          azurePowerShellVersion: "LatestVersion"
+          pwsh: true
+          ScriptType: "InlineScript"
+          Inline: |
+            .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1
