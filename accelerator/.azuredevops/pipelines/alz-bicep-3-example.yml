@@ -62,8 +62,8 @@ jobs:
           ScriptType: "InlineScript"
           Inline: |
             $whatif = .\pipeline-scripts\Deploy-ALZSubscriptionPlacement-Example.ps1 -WhatIfOnly $true
-            $whatif = $whatif.split("`n") -join "%0D%0A" # azdo variables cant handle linebreaks/multilines, this is a workaround
             $whatif
+            $whatif = $whatif.split("`n") -join "%0D%0A" # azdo variables cant handle linebreaks/multilines, this is a workaround
             echo "##vso[task.setvariable variable=whatif;]$whatif"
 
       - task: PowerShell@2
