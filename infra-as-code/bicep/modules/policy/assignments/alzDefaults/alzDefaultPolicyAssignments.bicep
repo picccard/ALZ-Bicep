@@ -10,7 +10,7 @@ param parTopLevelManagementGroupPrefix string = 'alz'
 @maxLength(10)
 param parTopLevelManagementGroupSuffix string = ''
 
-@sys.description('Management, Identity and Connectivity Management Groups beneath Platform Management Group have been deployed. If set to false, platform policies are assigned to the Platform Management Group; otherwise policies are assigned to the child management groups.')
+@sys.description('Management, Identity and Connectivity ManageDeploy-MDFC-Configment Groups beneath Platform Management Group have been deployed. If set to false, platform policies are assigned to the Platform Management Group; otherwise policies are assigned to the child management groups.')
 param parPlatformMgAlzDefaultsEnable bool = true
 
 @sys.description('Corp & Online Management Groups beneath Landing Zones Management Groups have been deployed. If set to false, policies will not try to be assigned to corp or onlone Management Groups.')
@@ -42,6 +42,13 @@ param parPrivateDnsZonesNamesToAuditInCorp array = []
 
 @sys.description('Set Enforcement Mode of all default Policies assignments to Do Not Enforce.')
 param parDisableAlzDefaultPolicies bool = false
+
+@sys.description('The vulnerability assessment solution to provision to machines. Setting this value to default will push the Qualys vulnerability assessment. The value mdTvm will push Microsoft defender vulnerability management.')
+@allowed([
+  'default'
+  'mdeTvm'
+])
+parVulnerabilityAssessmentProvider string = 'default'
 
 @sys.description('Name of the tag to use for excluding VMs from the scope of this policy. This should be used along with the Exclusion Tag Value parameter.')
 param parVmBackupExclusionTagName string = ''
@@ -434,6 +441,9 @@ module modPolicyAssignmentIntRootDeployMdfcConfig '../../../policy/assignments/p
       }
       ascExportResourceGroupLocation: {
         value: parLogAnalyticsWorkSpaceAndAutomationAccountLocation
+      }
+      vulnerabilityAssessmentProvider: {
+        value: parVulnerabilityAssessmentProvider
       }
       logAnalytics: {
         value: parLogAnalyticsWorkspaceResourceId
