@@ -35,6 +35,9 @@
     "parDisableAlzDefaultPolicies": {
       "value": false
     },
+    "parVulnerabilityAssessmentProvider": {
+      "value": "default"
+    },
     "parVmBackupExclusionTagName": {
       "value": ""
     },
