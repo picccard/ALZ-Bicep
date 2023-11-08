@@ -10,6 +10,9 @@
         "artifacts-parameters": {
           "level": "error"
         },
+        "explicit-values-for-loc-params": {
+          "level": "error"
+        },
         "max-outputs": {
           "level": "error"
         },
@@ -83,19 +86,13 @@
         "secure-parameter-default": {
           "level": "error"
         },
-        "simplify-interpolation": {
-          "level": "error"
-        },
-        "use-stable-vm-image": {
-          "level": "error"
-        },
-        "explicit-values-for-loc-params": {
-          "level": "error"
-        },
         "secure-params-in-nested-deploy": {
           "level": "error"
         },
         "secure-secrets-in-params": {
+          "level": "error"
+        },
+        "simplify-interpolation": {
           "level": "error"
         },
         "use-recent-api-versions": {
@@ -105,6 +102,9 @@
           "level": "error"
         },
         "use-stable-resource-identifiers": {
+          "level": "error"
+        },
+        "use-stable-vm-image": {
           "level": "error"
         }
       }
