@@ -39,7 +39,6 @@
           "disallowedhosts": [
             "management.core.windows.net",
             "gallery.azure.com",
-            "management.core.windows.net",
             "management.azure.com",
             "login.microsoftonline.com",
             "graph.windows.net",
@@ -50,10 +49,6 @@
             "azuredatalakeanalytics.net",
             "api.loganalytics.io",
             "api.loganalytics.iov1",
-            "asazure.windows.net",
-            "region.asazure.windows.net",
-            "api.loganalytics.iov1",
-            "api.loganalytics.io",
             "asazure.windows.net",
             "region.asazure.windows.net",
             "batch.core.windows.net"
