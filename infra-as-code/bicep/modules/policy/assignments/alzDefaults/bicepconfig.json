@@ -7,6 +7,21 @@
         "adminusername-should-not-be-literal": {
           "level": "error"
         },
+        "artifacts-parameters": {
+          "level": "error"
+        },
+        "max-outputs": {
+          "level": "error"
+        },
+        "max-params": {
+          "level": "error"
+        },
+        "max-resources": {
+          "level": "error"
+        },
+        "max-variables": {
+          "level": "error"
+        },
         "no-hardcoded-env-urls": {
           "level": "error",
           "disallowedhosts": [
@@ -35,7 +50,16 @@
             "schema.management.azure.com"
           ]
         },
+        "no-hardcoded-location": {
+          "level": "error"
+        },
+        "no-loc-expr-outside-params": {
+          "level": "error"
+        },
         "no-unnecessary-dependson": {
+          "level": "error"
+        },
+        "no-unused-existing-resources": {
           "level": "error"
         },
         "no-unused-params": {
@@ -50,46 +74,22 @@
         "prefer-interpolation": {
           "level": "error"
         },
+        "prefer-unquoted-property-names": {
+          "level": "error"
+        },
+        "protect-commandtoexecute-secrets": {
+          "level": "error"
+        },
         "secure-parameter-default": {
           "level": "error"
         },
         "simplify-interpolation": {
           "level": "error"
         },
-        "protect-commandtoexecute-secrets": {
-          "level": "error"
-        },
         "use-stable-vm-image": {
           "level": "error"
         },
         "explicit-values-for-loc-params": {
-          "level": "error"
-        },
-        "no-hardcoded-location": {
-          "level": "error"
-        },
-        "no-loc-expr-outside-params": {
-          "level": "error"
-        },
-        "max-outputs": {
-          "level": "error"
-        },
-        "max-params": {
-          "level": "error"
-        },
-        "max-resources": {
-          "level": "error"
-        },
-        "max-variables": {
-          "level": "error"
-        },
-        "artifacts-parameters": {
-          "level": "error"
-        },
-        "no-unused-existing-resources": {
-          "level": "error"
-        },
-        "prefer-unquoted-property-names": {
           "level": "error"
         },
         "secure-params-in-nested-deploy": {
