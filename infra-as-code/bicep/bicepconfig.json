@@ -13,6 +13,9 @@
         "decompiler-cleanup": {
           "level": "error"
         },
+        "explicit-values-for-loc-params":{
+          "level": "error"
+        },
         "max-outputs": {
           "level": "error"
         },
